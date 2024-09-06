@@ -15,9 +15,10 @@ langchain-community = "^0.2.16"
 langgraph = "^0.2.18"
 python-dotenv = "^1.0.1"
 langsmith = "^0.1.115"
+typer = "^0.12.5"
 
 [tool.poetry.scripts]
-guess = "wordle_bot.guess:main"
+wordle_bot = "wordle_bot.guess:app"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"

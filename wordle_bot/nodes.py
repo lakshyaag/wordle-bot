@@ -18,7 +18,7 @@ def get_guess(state: AgentState) -> AgentState:
 
     llm = ChatOpenAI(
         model="gpt-4o",
-        temperature=0.5,
+        temperature=0.8,
     ).with_structured_output(Attempt)
 
     # Print the messages to the log
@@ -67,7 +67,7 @@ def check_attempt(state: AgentState) -> AgentState:
 
     ai_message = AIMessage(
         dedent(
-            f"""Feedback for Attempt {state['attempt_count']}: 
+            f"""Feedback for Attempt {state['attempt_count'] - 1}: 
 {feedback_message}"""
         )
     )
@@ -82,10 +82,11 @@ def next_guess(state: AgentState) -> AgentState:
     feedbacks = state["feedbacks"]
     attempt_count = state["attempt_count"]
 
-    if attempt_count > 6:
-        logger.info("You have run out of attempts.")
-        state["solved"] = False
-        return "end"
+    if state["attempt_limit"]:
+        # If the attempt limit is enabled, check if the user has run out of attempts
+        if attempt_count > 6:
+            logger.info("You have run out of attempts.")
+            return "end"
 
     feedback = feedbacks[-1]
 
@@ -93,7 +94,6 @@ def next_guess(state: AgentState) -> AgentState:
         logger.info(
             f'Word "{state["target_word"]}" guessed in {attempt_count} attempts!'
         )
-        state["solved"] = True
         return "end"
 
     return "continue"

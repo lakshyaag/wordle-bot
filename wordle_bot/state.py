@@ -46,7 +46,7 @@ class Attempt(BaseModel):
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     attempt_count: int
+    attempt_limit: bool
     target_word: str
     attempts: Annotated[list[Attempt], add]
     feedbacks: Annotated[list[LetterAttemptFeedback], add]
-    solved: bool
