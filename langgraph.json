@@ -1,0 +1,9 @@
+{
+    "dependencies": [
+        "."
+    ],
+    "graphs": {
+        "agent": "./wordle_bot/agent.py:graph"
+    },
+    "env": ".env"
+}
