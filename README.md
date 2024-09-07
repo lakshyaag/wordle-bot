@@ -25,10 +25,16 @@ poetry install
 
 ### Running the Bot
 
-To run the Wordle Bot, use the following command:
+To run the Wordle Bot on a single word, use the following command:
 
 ```bash
-wordle_bot <TARGET_WORD> [--no-enable-attempt-limit]
+wordle_bot guess <TARGET_WORD> [--no-attempt-limit]
+```
+
+To run the Wordle Bot on a file containing multiple words, use the following command:
+
+```bash
+wordle_bot test <FILE_PATH> [--no-attempt-limit]
 ```
 
 This will start the application and allow you to interact with the Wordle Bot through the command line.

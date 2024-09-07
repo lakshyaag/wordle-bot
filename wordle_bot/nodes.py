@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 import logging
 from .state import AgentState, Attempt, LetterAttemptFeedback
@@ -16,6 +16,8 @@ def get_guess(state: AgentState) -> AgentState:
     messages = state["messages"]
     attempt_count = state["attempt_count"]
 
+    messages += [HumanMessage(f"Attempt {attempt_count} | Guess a 5-letter word.")]
+
     llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.8,
@@ -30,12 +32,12 @@ def get_guess(state: AgentState) -> AgentState:
 
     response = llm.invoke(messages)
 
+    attempt = "".join(letter.letter for letter in response.letters)
     ai_message = AIMessage(
-        dedent(
-            f"""Attempt {attempt_count}: """
-            + "".join(letter.letter for letter in response.letters)
-        )
+        dedent(f"""<attempt key={attempt_count}>{attempt}</attempt>""")
     )
+
+    logger.info(f"Attempt {attempt_count}: {attempt}")
 
     return {
         "messages": ai_message,
@@ -51,24 +53,26 @@ def check_attempt(state: AgentState) -> AgentState:
     feedback = [
         LetterAttemptFeedback.from_letter_attempt(
             letter_attempt=letter,
-            status="red"
-            if letter.letter not in target_word
-            else "green"
-            if letter.letter == target_word[letter.position]
-            else "yellow",
+            status=(
+                "green"
+                if letter.letter == target_word[letter.position]
+                else "yellow"
+                if letter.letter in target_word
+                else "red"
+            ),
         )
-        for i, letter in enumerate(attempt.letters)
+        for letter in attempt.letters
     ]
 
     feedback_message = "\n".join(
-        f"Position {i}: {fb.attempt.letter} is {fb.status}"
-        for i, fb in enumerate(feedback)
+        f"{i},{fb.attempt.letter},{fb.status}" for i, fb in enumerate(feedback)
     )
 
     ai_message = AIMessage(
         dedent(
-            f"""Feedback for Attempt {state['attempt_count'] - 1}: 
-{feedback_message}"""
+            f"""<feedback key="{state["attempt_count"] - 1}">
+{feedback_message}
+</feedback>"""
         )
     )
 
@@ -86,7 +90,7 @@ def next_guess(state: AgentState) -> AgentState:
         # If the attempt limit is enabled, check if the user has run out of attempts
         if attempt_count > 6:
             logger.info("You have run out of attempts.")
-            return "end"
+            return "timeout"
 
     feedback = feedbacks[-1]
 
@@ -94,6 +98,6 @@ def next_guess(state: AgentState) -> AgentState:
         logger.info(
             f'Word "{state["target_word"]}" guessed in {attempt_count} attempts!'
         )
-        return "end"
+        return "success"
 
     return "continue"
